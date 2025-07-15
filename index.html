@@ -1,0 +1,111 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THDC India Limited - Hospital Bhagirathi Puram, Tehri</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header>
+        <img src="images/thdc-logo.png" alt="THDC India Limited Logo" class="logo">
+        <h1>THDC India Limited</h1>
+        <h2>Hospital Bhagirathi Puram, Tehri</h2>
+    </header>
+    <div class="container">
+        <h3>Patient Registration Portal</h3>
+        <form id="registrationForm" action="php/register.php" method="POST">
+            <label for="category">Category:</label>
+            <select id="category" name="category" onchange="toggleFields()" required>
+                <option value="A">Category A (Employees)</option>
+                <option value="B">Category B (Contract/Non-Employee)</option>
+            </select>
+
+            <label for="opd_reg_no">OPD Reg No:</label>
+            <input type="text" id="opd_reg_no" name="opd_reg_no" readonly>
+
+            <label for="reg_date">Date & Time:</label>
+            <input type="text" id="reg_date" name="reg_date" readonly>
+
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="age">Age:</label>
+            <input type="number" id="age" name="age" required>
+
+            <label for="gender">Gender:</label>
+            <select id="gender" name="gender" required>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <label for="mobile">Mobile Number:</label>
+            <input type="tel" id="mobile" name="mobile" pattern="[0-9]{10}" required>
+
+            <label for="email">Email ID:</label>
+            <input type="email" id="email" name="email" required>
+
+            <div id="categoryAFields">
+                <label for="employee_name">Name of Employee:</label>
+                <input type="text" id="employee_name" name="employee_name">
+
+                <label for="relationship">Relationship with Employee:</label>
+                <select id="relationship" name="relationship">
+                    <option value="Self">Self</option>
+                    <option value="Spouse">Spouse</option>
+                    <option value="Child">Child</option>
+                    <option value="Other">Other</option>
+                </select>
+
+                <label for="workplace">Workplace:</label>
+                <input type="text" id="workplace" name="workplace" style="display:none;">
+            </div>
+
+            <label for="recommended_doctor">Recommended Doctor:</label>
+            <input type="text" id="recommended_doctor" name="recommended_doctor" required>
+
+            <button type="submit">Register</button>
+        </form>
+    </div>
+    <script src="js/script.js"></script>
+</body>
